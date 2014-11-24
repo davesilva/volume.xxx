@@ -17,7 +17,7 @@
 // #define SPI_MISO             12 //arduino   <->   SPI Master In Slave Out   -> SDO (Pin 13 on McpDigitalPot DIP)
 
 // Then choose any other free pin as the Slave Select (pin 10 if the default but doesnt have to be)
-#define MCP_DIGITAL_POT_SLAVE_SELECT_PIN 10 //arduino   <->   Chip Select               -> CS  (Pin 01 on McpDigitalPot DIP)
+#define MCP_DIGITAL_POT_SLAVE_SELECT_PIN 8 //arduino   <->   Chip Select               -> CS  (Pin 01 on McpDigitalPot DIP)
 
 // Its recommended to measure the rated end-end resistance (terminal A to terminal B)
 // Because this can vary by a large margin, up to -+ 20%. And temperature variations.
@@ -33,64 +33,50 @@ McpDigitalPot digitalPot = McpDigitalPot( MCP_DIGITAL_POT_SLAVE_SELECT_PIN, rAB_
 // Instantiate McpDigitalPot object, after measuring the real rW wiper resistance
 // McpDigitalPot digitalPot = McpDigitalPot( MCP_DIGITAL_POT_SLAVE_SELECT_PIN, rAB_ohms, rW_ohms );
 
-void setup()
-{
+int power = 7;
+int powerIndicator = 6;
+
+void setup() {
+  int state = 0;
+  
   // initialize SPI:
-  SPI.begin(); 
+  SPI.begin();
+
+  // initialize Serial
+  Serial.begin(9600);
+  Serial.println("init");
   
-  // First measure the the wiper resistance, called rW
-  digitalPot.setPosition(0, 0); // rAW = rW_ohms
-  digitalPot.setPosition(1, 0); // rAW = rW_ohms
-  delay(5000);
+  // initialize digital pins
+  pinMode(power, OUTPUT);
+  digitalWrite(power, HIGH);
+  pinMode(powerIndicator, INPUT);
+
+  digitalPot.scale = 100.0;
   
-  // (optional)
-  // Scale to 100.0 for a percentage, or 1.0 for a fraction
-  // Eg if scale=100, then setResistance(0, 100) = max rAW resistance
-  // Eg    scale=1.0, then setResistance(0, 1.0) = max rAW resistance
-  // digitalPot.scale = 1.0;
-
-  digitalPot.scale = 100.0; // For the timeout example, below
-
-  // digitalPot.setResistance(0, 40); // set pot0 rAW = 40% of max value
-  // digitalPot.setResistance(1, 80); // set pot1 rAW = 80% of max value
-  // 
-  // delay(5000);
-  // 
-  // digitalPot.setResistance(0, 5);  // set pot0 rAW =  5% of max value
-  // digitalPot.setResistance(1, 50); // set pot1 rAW = 50% of max value
-
-  // Go back to using ohms
-  // digitalPot.scale = McpDigitalPot.rAB_ohms;
+  digitalPot.setResistance(0, 80);
 }
 
-
-
-
-// Cycle the wipers around at 20% increments, changing every 2 seconds
-long timeoutInterval = 2000;
-long previousMillis = 0;
-float counter = 0.0;
-
-void timeout()
-{
-  if(counter > 100.0)
-    counter = 0.0;
-
-  // These resistances are just percentages of 100
-  digitalPot.setResistance(0, counter);
-  digitalPot.setResistance(1, 100 - counter); // Invert the wiper1
-
-  counter += 20.0;
-}
-
-void loop()
-{
-  if (  millis() - previousMillis > timeoutInterval )
-  {
-    timeout();
-    previousMillis = millis();
+void loop() {
+  if (Serial.available() > 0) {
+    Serial.print("> ");
+    String command = Serial.readStringUntil('\n');
+    Serial.println(command);
+    
+    if (command == "on") {
+      on();
+    }
+    else if (command == "off") {
+      off();
+    }
   }
-  // Loop.
 }
 
+void on() {
+  digitalWrite(power, 0);
+  Serial.println("ON");
+}
 
+void off() {
+  digitalWrite(power, 1);
+  Serial.println("OFF");
+}
