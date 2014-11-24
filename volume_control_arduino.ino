@@ -36,6 +36,8 @@ McpDigitalPot digitalPot = McpDigitalPot( MCP_DIGITAL_POT_SLAVE_SELECT_PIN, rAB_
 const int power = 7;
 const int powerIndicator = 6;
 
+int currentVolume = 0;
+
 void setup() {
   int state = 0;
   
@@ -57,6 +59,14 @@ void setup() {
 }
 
 void loop() {
+  
+}
+
+/*
+ * SerialEvent occurs whenever a new data comes in the
+ * hardware serial RX.
+ */
+void serialEvent() {
   if (Serial.available() > 0) {
     String command = Serial.readStringUntil('\n');
     Serial.println(command);
@@ -78,16 +88,25 @@ void loop() {
   }
 }
 
+/*
+ * Turn the speaker power on
+ */
 void on() {
   digitalWrite(power, 0);
   Serial.println("ON");
 }
 
+/*
+ * Turn the speaker power off
+ */
 void off() {
   digitalWrite(power, 1);
   Serial.println("OFF");
 }
 
+/*
+ * Set the speaker volume to the given volume (range 0 - 128)
+ */
 void setVolume(int volume) {
   if (volume < 0 || volume > 128) {
     Serial.print("INVALID VOLUME ");
@@ -98,7 +117,5 @@ void setVolume(int volume) {
   Serial.print("SET VOLUME ");
   Serial.println(volume);
   digitalPot.setResistance(0, volume);
-  
-  delay(50);
-  Serial.println(analogRead(A0));
+  currentVolume = volume;
 }
