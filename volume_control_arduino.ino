@@ -33,8 +33,8 @@ McpDigitalPot digitalPot = McpDigitalPot( MCP_DIGITAL_POT_SLAVE_SELECT_PIN, rAB_
 // Instantiate McpDigitalPot object, after measuring the real rW wiper resistance
 // McpDigitalPot digitalPot = McpDigitalPot( MCP_DIGITAL_POT_SLAVE_SELECT_PIN, rAB_ohms, rW_ohms );
 
-int power = 7;
-int powerIndicator = 6;
+const int power = 7;
+const int powerIndicator = 6;
 
 void setup() {
   int state = 0;
@@ -44,21 +44,20 @@ void setup() {
 
   // initialize Serial
   Serial.begin(9600);
-  Serial.println("init");
   
   // initialize digital pins
   pinMode(power, OUTPUT);
   digitalWrite(power, HIGH);
   pinMode(powerIndicator, INPUT);
 
-  digitalPot.scale = 100.0;
+  digitalPot.scale = 128.0;
+  digitalPot.setResistance(0, 0);
   
-  digitalPot.setResistance(0, 80);
+  Serial.print("> ");
 }
 
 void loop() {
   if (Serial.available() > 0) {
-    Serial.print("> ");
     String command = Serial.readStringUntil('\n');
     Serial.println(command);
     
@@ -68,6 +67,14 @@ void loop() {
     else if (command == "off") {
       off();
     }
+    else {
+      char* commandChars = new char[command.length() + 1];
+      command.toCharArray(commandChars, command.length() + 1);
+      int volume = atoi(commandChars);
+      setVolume(volume);
+    }
+    
+    Serial.print("\n> ");
   }
 }
 
@@ -79,4 +86,19 @@ void on() {
 void off() {
   digitalWrite(power, 1);
   Serial.println("OFF");
+}
+
+void setVolume(int volume) {
+  if (volume < 0 || volume > 128) {
+    Serial.print("INVALID VOLUME ");
+    Serial.println(volume);
+    return;
+  }
+
+  Serial.print("SET VOLUME ");
+  Serial.println(volume);
+  digitalPot.setResistance(0, volume);
+  
+  delay(50);
+  Serial.println(analogRead(A0));
 }
