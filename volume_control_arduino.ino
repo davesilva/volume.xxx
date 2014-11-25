@@ -1,66 +1,37 @@
-// This example demonstrates control over SPI to the Microchip McpDigitalPot Digital potentometer
-// SPI Pinouts are for Arduino Uno and Arduino Duemilanove board (will differ for Arduino MEGA)
-
-// Download these into your Sketches/libraries/ folder...
-
-// The Spi library by Cam Thompson. It was originally part of FPU library (micromegacorp.com)
-// Available from http://arduino.cc/playground/Code/Fpu or http://www.arduino.cc/playground/Code/Spi
-// Including SPI.h vv below initializea the MOSI, MISO, and SPI_CLK pins as per ATMEGA 328P
 #include <SPI.h>
 
 // McpDigitalPot library available from https://github.com/dreamcat4/McpDigitalPot
 #include <McpDigitalPot.h>
 
-// Wire up the SPI Interface common lines:
-// #define SPI_CLOCK            13 //arduino   <->   SPI Slave Clock Input     -> SCK (Pin 02 on McpDigitalPot DIP)
-// #define SPI_MOSI             11 //arduino   <->   SPI Master Out Slave In   -> SDI (Pin 03 on McpDigitalPot DIP)
-// #define SPI_MISO             12 //arduino   <->   SPI Master In Slave Out   -> SDO (Pin 13 on McpDigitalPot DIP)
+// Webduino library available from https://github.com/sirleech/Webduino
+#include <Ethernet.h>
+#include <WebServer.h>
 
-// Then choose any other free pin as the Slave Select (pin 10 if the default but doesnt have to be)
-#define MCP_DIGITAL_POT_SLAVE_SELECT_PIN 8 //arduino   <->   Chip Select               -> CS  (Pin 01 on McpDigitalPot DIP)
+// no-cost stream operator as described at 
+// http://sundial.org/arduino/?page_id=119
+template<class T>
+inline Print &operator <<(Print &obj, T arg)
+{ obj.print(arg); return obj; }
 
-// Its recommended to measure the rated end-end resistance (terminal A to terminal B)
-// Because this can vary by a large margin, up to -+ 20%. And temperature variations.
-float rAB_ohms = 5090.00; // 5k Ohm
+// Digital pins
+#define POWER_PIN 7
+#define VOLUME_SLAVE_SELECT_PIN 8
 
-// Instantiate McpDigitalPot object, with default rW (=117.5 ohm, its typical resistance)
-McpDigitalPot digitalPot = McpDigitalPot( MCP_DIGITAL_POT_SLAVE_SELECT_PIN, rAB_ohms );
+// Instantiate the volumeControl object
+const float rAB_ohms = 5090.00; // 5k Ohm
+McpDigitalPot volumeControl = McpDigitalPot(VOLUME_SLAVE_SELECT_PIN, rAB_ohms);
 
-// rW - Wiper resistance. This is a small additional constant. To measure it
-// use the example, setup(). Required for accurate calculations (to nearest ohm)
-// Datasheet Page 5, gives typical values MIN=75ohm, MAX @5v=160ohm,@2.7v=300ohm
-// Usually rW should be somewhere between 100 and 150 ohms.
-// Instantiate McpDigitalPot object, after measuring the real rW wiper resistance
-// McpDigitalPot digitalPot = McpDigitalPot( MCP_DIGITAL_POT_SLAVE_SELECT_PIN, rAB_ohms, rW_ohms );
+// Ethernet
+static uint8_t mac[] = { 0x90, 0xA2, 0xDA, 0x0D, 0x38, 0x52 };
+static uint8_t ip[] = { 192, 168, 1, 10 };
 
-const int power = 7;
-const int powerIndicator = 6;
+// Web server
+#define PREFIX ""
+WebServer webserver(PREFIX, 80);
 
+// Global variables
 int currentVolume = 0;
-
-void setup() {
-  int state = 0;
-  
-  // initialize SPI:
-  SPI.begin();
-
-  // initialize Serial
-  Serial.begin(9600);
-  
-  // initialize digital pins
-  pinMode(power, OUTPUT);
-  digitalWrite(power, HIGH);
-  pinMode(powerIndicator, INPUT);
-
-  digitalPot.scale = 128.0;
-  digitalPot.setResistance(0, 0);
-  
-  Serial.print("> ");
-}
-
-void loop() {
-  
-}
+boolean powered = false;
 
 /*
  * SerialEvent occurs whenever a new data comes in the
@@ -92,7 +63,8 @@ void serialEvent() {
  * Turn the speaker power on
  */
 void on() {
-  digitalWrite(power, 0);
+  digitalWrite(POWER_PIN, 0);
+  powered = true;
   Serial.println("ON");
 }
 
@@ -100,8 +72,16 @@ void on() {
  * Turn the speaker power off
  */
 void off() {
-  digitalWrite(power, 1);
+  digitalWrite(POWER_PIN, 1);
+  powered = false;
   Serial.println("OFF");
+}
+
+/*
+ * Returns true if the speakers are currently powered
+ */
+boolean isPowered() {
+  return powered;
 }
 
 /*
@@ -116,6 +96,136 @@ void setVolume(int volume) {
 
   Serial.print("SET VOLUME ");
   Serial.println(volume);
-  digitalPot.setResistance(0, volume);
+  volumeControl.setResistance(0, volume);
   currentVolume = volume;
+}
+
+/*
+ * Get the current speaker volume
+ */
+int getVolume() {
+  return currentVolume;
+}
+
+/*
+ * GET /
+ * Renders the main volume control page
+ */
+void index(WebServer &server, WebServer::ConnectionType type, char *, bool) {
+  if (type == WebServer::GET) {
+    server.httpSuccess();
+    server.print(F("<h1>Volume control</h1>"));
+  }
+  else {
+    server.httpFail();
+  }
+}
+
+/*
+ * GET /power
+ * Renders a JSON response with the current power state
+ *
+ * POST /power
+ * Sets the current power state
+ *
+ * Params:
+ *    power - "on" | "off"
+ */
+void power(WebServer &server, WebServer::ConnectionType type, char *, bool) {
+  char name[16], value[16];
+
+  if (type == WebServer::GET) {
+    server.httpSuccess("application/json");
+    server << "{\"power\":\"" << (isPowered() ? "on" : "off") << "\"}";
+  }
+  else if (type == WebServer::POST) {
+    server.httpNoContent();
+    server.readPOSTparam(name, 16, value, 16);
+    if (strcmp(name, "power") == 0) {
+      if (strcmp(value, "on") == 0) {
+        on();
+      }
+      else if (strcmp(value, "off") == 0) {
+        off();
+      }
+      else {
+        server.httpFail();
+      }
+    }
+    else {
+      server.httpFail();
+    }
+  }
+  else {
+    server.httpFail();
+  }
+}
+
+/*
+ * GET /volume
+ * Renders a JSON response with the current volume level
+ *
+ * POST /volume
+ * Sets the current volume level
+ *
+ * Params:
+ *    volume - an integer 0 <= n <= 128
+ */
+void volume(WebServer &server, WebServer::ConnectionType type, char *, bool) {
+  char name[16], value[16];
+
+  if (type == WebServer::GET) {
+    server.httpSuccess("application/json");
+    server << "{\"volume\":" << getVolume() << "}";
+  }
+  else if (type == WebServer::POST) {
+    server.httpNoContent();
+    server.readPOSTparam(name, 16, value, 16);
+    if (strcmp(name, "volume") == 0) {
+      setVolume(atoi(value));
+    }
+    else {
+      server.httpFail();
+    }
+  }
+  else {
+    server.httpFail();
+  }
+}
+
+void setup() {
+  int state = 0;
+
+  // initialize SPI:
+  SPI.begin();
+
+  // initialize Serial
+  Serial.begin(9600);
+
+  // initialize digital pins
+  pinMode(POWER_PIN, OUTPUT);
+  digitalWrite(POWER_PIN, HIGH);
+
+  // Initialize digital pot
+  volumeControl.scale = 128.0;
+  volumeControl.setResistance(0, 0);
+
+  // Initialize ethernet
+  Ethernet.begin(mac, ip);
+
+  // Initialize web server
+  webserver.setDefaultCommand(&index); // GET /
+  webserver.addCommand("power", &power); // GET /power & POST /power
+  webserver.addCommand("volume", &volume); // GET /volume & POST /volume
+  webserver.begin();
+
+  Serial.print("> ");
+}
+
+void loop() {
+  char buf[64];
+  int len = 64;
+
+  // process incoming connections forever
+  webserver.processConnection(buf, &len);
 }
