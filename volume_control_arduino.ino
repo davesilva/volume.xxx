@@ -7,6 +7,9 @@
 #include <Ethernet.h>
 #include <WebServer.h>
 
+// index.html file
+#include "index_html.h"
+
 // no-cost stream operator as described at 
 // http://sundial.org/arduino/?page_id=119
 template<class T>
@@ -41,7 +44,7 @@ void serialEvent() {
   if (Serial.available() > 0) {
     String command = Serial.readStringUntil('\n');
     Serial.println(command);
-    
+
     if (command == "on") {
       on();
     }
@@ -54,7 +57,7 @@ void serialEvent() {
       int volume = atoi(commandChars);
       setVolume(volume);
     }
-    
+
     Serial.print("\n> ");
   }
 }
@@ -114,7 +117,7 @@ int getVolume() {
 void index(WebServer &server, WebServer::ConnectionType type, char *, bool) {
   if (type == WebServer::GET) {
     server.httpSuccess();
-    server.print(F("<h1>Volume control</h1>"));
+    server.printP(indexHtml);
   }
   else {
     server.httpFail();
@@ -211,3 +214,4 @@ void loop() {
   // process incoming connections forever
   webserver.processConnection(buf, &len);
 }
+

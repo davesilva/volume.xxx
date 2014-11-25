@@ -1,0 +1,64 @@
+<!DOCTYPE HTML>
+
+<html lang="en">
+
+    <head>
+
+        <title> Volume Control </title>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- Bootstrap -->
+        <link rel="stylesheet"
+              href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+
+        <!-- Application stylesheet -->
+        <link rel="stylesheet"
+              href="//s3.amazonaws.com/davesilva/volume_control/app.css">
+
+    </head>
+
+    <body>
+
+        <!-- jQuery -->
+        <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+
+        <!-- Bootstrap -->
+        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+
+        <!-- Application script -->
+        <script src="//s3.amazonaws.com/davesilva/volume_control/app.js"></script>
+
+        <div class="container" id="main">
+            <h1> Volume Control </h1>
+
+            <form action="/speakers" method="post" role="form">
+                <div class="form-group">
+                    <label class="radio-inline">
+                        <input type="radio" name="power" value="true"/>
+                        On
+                    </label>
+
+                    <label class="radio-inline">
+                        <input type="radio" name="power" value="false"/>
+                        Off
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        Volume
+                        <input class="form-control" type="text" name="volume"/>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <input class="btn btn-primary" type="submit"/>
+                </div>
+            </form>
+        </div>
+
+    </body>
+
+</html>

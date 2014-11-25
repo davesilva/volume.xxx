@@ -1,0 +1,2 @@
+#!/bin/sh
+xxd -i web/index.html | sed "s/unsigned char web_index_html\[\]/P(indexHtml)/g;s/\}\;/, 0x00 \}\;/g;$ d" > index_html.h
