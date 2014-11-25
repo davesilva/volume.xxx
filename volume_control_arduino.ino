@@ -122,71 +122,54 @@ void index(WebServer &server, WebServer::ConnectionType type, char *, bool) {
 }
 
 /*
- * GET /power
- * Renders a JSON response with the current power state
+ * GET /speakers
+ * Renders a JSON response with the current power state and
+ * volume level of the speakers
  *
- * POST /power
- * Sets the current power state
- *
- * Params:
- *    power - "on" | "off"
- */
-void power(WebServer &server, WebServer::ConnectionType type, char *, bool) {
-  char name[16], value[16];
-
-  if (type == WebServer::GET) {
-    server.httpSuccess("application/json");
-    server << "{\"power\":\"" << (isPowered() ? "on" : "off") << "\"}";
-  }
-  else if (type == WebServer::POST) {
-    server.httpNoContent();
-    server.readPOSTparam(name, 16, value, 16);
-    if (strcmp(name, "power") == 0) {
-      if (strcmp(value, "on") == 0) {
-        on();
-      }
-      else if (strcmp(value, "off") == 0) {
-        off();
-      }
-      else {
-        server.httpFail();
-      }
-    }
-    else {
-      server.httpFail();
-    }
-  }
-  else {
-    server.httpFail();
-  }
-}
-
-/*
- * GET /volume
- * Renders a JSON response with the current volume level
- *
- * POST /volume
- * Sets the current volume level
+ * POST /speakers
+ * Sets the current power state and volume level
  *
  * Params:
  *    volume - an integer 0 <= n <= 128
+ *    power - true | false
  */
-void volume(WebServer &server, WebServer::ConnectionType type, char *, bool) {
+void speakers(WebServer &server, WebServer::ConnectionType type, char *, bool) {
   char name[16], value[16];
+  bool repeat;
 
   if (type == WebServer::GET) {
     server.httpSuccess("application/json");
-    server << "{\"volume\":" << getVolume() << "}";
+    server << "{";
+    server << "\"power\":" << (isPowered() ? "true" : "false") << ",";
+    server << "\"volume\":" << getVolume();
+    server << "}";
   }
   else if (type == WebServer::POST) {
     server.httpNoContent();
-    server.readPOSTparam(name, 16, value, 16);
-    if (strcmp(name, "volume") == 0) {
-      setVolume(atoi(value));
-    }
-    else {
-      server.httpFail();
-    }
+
+    do {
+      repeat = server.readPOSTparam(name, 16, value, 16);
+
+      if (strcmp(name, "volume") == 0) {
+        setVolume(atoi(value));
+      }
+      else if (strcmp(name, "power") == 0) {
+        if (strcmp(value, "true") == 0) {
+          on();
+        }
+        else if (strcmp(value, "false") == 0) {
+          off();
+        }
+        else {
+          server.httpFail();
+          break;
+        }
+      }
+      else {
+        server.httpFail();
+        break;
+      }
+    } while (repeat);
   }
   else {
     server.httpFail();
@@ -215,8 +198,7 @@ void setup() {
 
   // Initialize web server
   webserver.setDefaultCommand(&index); // GET /
-  webserver.addCommand("power", &power); // GET /power & POST /power
-  webserver.addCommand("volume", &volume); // GET /volume & POST /volume
+  webserver.addCommand("speakers", &speakers); // GET /speakers & POST /speakers
   webserver.begin();
 
   Serial.print("> ");
