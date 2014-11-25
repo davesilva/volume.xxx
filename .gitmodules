@@ -1,0 +1,6 @@
+[submodule "lib/McpDigitalPot"]
+	path = lib/McpDigitalPot
+	url = git@github.com:teabot/McpDigitalPot.git
+[submodule "lib/Webduino"]
+	path = lib/Webduino
+	url = https://github.com/sirleech/Webduino
