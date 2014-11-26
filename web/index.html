@@ -13,6 +13,10 @@
         <link rel="stylesheet"
               href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 
+        <!-- Bootstrap TouchSpin plugin -->
+        <link rel="stylesheet"
+              href="//s3.amazonaws.com/davesilva/volume_control/vendor/jquery.bootstrap-touchspin.min.css">
+
         <!-- Application stylesheet -->
         <link rel="stylesheet"
               href="//s3.amazonaws.com/davesilva/volume_control/app.css">
@@ -27,11 +31,14 @@
         <!-- Bootstrap -->
         <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
 
+        <!-- Bootstrap TouchSpin plugin -->
+        <script src="//s3.amazonaws.com/davesilva/volume_control/vendor/jquery.bootstrap-touchspin.min.js"></script>
+
         <!-- Application script -->
         <script src="//s3.amazonaws.com/davesilva/volume_control/app.js"></script>
 
         <div class="container" id="main">
-            <h1> Volume Control </h1>
+            <h1> Speakers </h1>
 
             <form action="/speakers" method="post" role="form">
                 <div class="form-group">
@@ -49,7 +56,7 @@
                 <div class="form-group">
                     <label>
                         Volume
-                        <input class="form-control" type="text" name="volume"/>
+                        <input class="form-control input-lg" type="text" name="volume"/>
                     </label>
                 </div>
 
