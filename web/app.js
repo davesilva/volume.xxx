@@ -12,7 +12,7 @@ $(document).ready(function() {
 
     $volume.TouchSpin({
         min: 0,
-        max: 50,
+        max: 70,
         step: 1,
         booster: false,
         mousewheel: false
