@@ -1,12 +1,19 @@
 $(document).ready(function() {
     var $power = $("input[name=power]");
     var $volume = $("input[name=volume]");
-    var $form = $('form');
+    var $form = $("form");
 
     var getSpeakerState = function() {
-        $.ajax("/speakers").done(function(response) {
-            $power.val([response['power']]);
-            $volume.val(response['volume']);
+        $.get("/speakers").done(function(response) {
+            $power.val([response["power"]]);
+            $volume.val(response["volume"]);
+        });
+    };
+
+    var setSpeakerState = function() {
+        $.post("/speakers", {
+            power: $power.find(":checked").val(),
+            volume: $volume.val()
         });
     };
 
@@ -26,12 +33,18 @@ $(document).ready(function() {
         $volume.select();
     });
 
-    $('input').change(function(event) {
+    $("input").change(function(event) {
         $form.submit();
+    });
+
+    $form.submit(function(event) {
+        setSpeakerState();
+        event.preventDefault();
+        return false;
     });
 
     getSpeakerState();
 
     $volume.focus();
-    $('input[type=submit]').hide();
+    $("input[type=submit]").hide();
 });
