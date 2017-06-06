@@ -1,3 +1,4 @@
 #!/bin/sh
 xxd -i web/index.html | sed "s/unsigned char web_index_html\[\]/P(indexHtml)/g;s/\}\;/, 0x00 \}\;/g;$ d" > src/index_html.h
+xxd -i web/favicon.ico | sed "s/unsigned char web_favicon_ico\[\] =/#define WEBDUINO_FAVICON_DATA /g;s/\;//g;$ d" | tr '\n' ' ' > src/favicon.h
 ino build

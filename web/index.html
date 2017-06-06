@@ -40,7 +40,7 @@
         <div class="container" id="main">
             <h1> Speakers </h1>
 
-            <form action="/speakers" method="post" role="form">
+            <form id="speakers_form" action="/speakers" method="post" role="form">
                 <div class="form-group">
                     <label class="radio-inline">
                         <input type="radio" name="power" value="true"/>
@@ -62,6 +62,41 @@
 
                 <div class="form-group">
                     <input class="btn btn-primary" type="submit"/>
+                </div>
+            </form>
+
+            <h1> Projector </h1>
+
+            <form>
+                <div class="form-group">
+                    <button id="projector_on" class="btn btn-primary"> On </button>
+                    <button id="projector_off" class="btn btn-primary"> Off </button>
+                </div>
+            </form>
+
+            <h1> Input </h1>
+
+            <form>
+                <div class="form-group">
+                    <label class="radio-inline">
+                        <input type="radio" name="hdmi_input" id="hdmi_input_1"/>
+                        PC
+                    </label>
+
+                    <label class="radio-inline">
+                        <input type="radio" name="hdmi_input" id="hdmi_input_2"/>
+                        Xbox
+                    </label>
+
+                    <label class="radio-inline">
+                        <input type="radio" name="hdmi_input" id="hdmi_input_3"/>
+                        PS4
+                    </label>
+
+                    <label class="radio-inline">
+                        <input type="radio" name="hdmi_input" id="hdmi_input_4"/>
+                        Chromecast
+                    </label>
                 </div>
             </form>
         </div>

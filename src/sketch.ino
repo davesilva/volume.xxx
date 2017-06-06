@@ -4,8 +4,13 @@
 #include <McpDigitalPot.h>
 
 // Webduino library available from https://github.com/sirleech/Webduino
+#define WEBDUINO_FAIL_MESSAGE "<h1> 400 Bad Request </h1>"
+#include "favicon.h"
 #include <Ethernet.h>
 #include <WebServer.h>
+
+// IRRemote library available from https://github.com/shirriff/Arduino-IRremote
+#include <IRremote.h>
 
 // index.html file
 #include "index_html.h"
@@ -19,10 +24,14 @@ inline Print &operator <<(Print &obj, T arg)
 // Digital pins
 #define POWER_PIN 7
 #define VOLUME_SLAVE_SELECT_PIN 8
+// IR send pin is always 3
 
 // Instantiate the volumeControl object
 const float rAB_ohms = 5090.00; // 5k Ohm
 McpDigitalPot volumeControl = McpDigitalPot(VOLUME_SLAVE_SELECT_PIN, rAB_ohms);
+
+// Instantiate the irSend object
+IRsend irSend;
 
 // Ethernet
 static uint8_t mac[] = { 0x90, 0xA2, 0xDA, 0x0D, 0x38, 0x52 };
@@ -148,8 +157,6 @@ void speakers(WebServer &server, WebServer::ConnectionType type, char *, bool) {
     server << "}";
   }
   else if (type == WebServer::POST) {
-    server.httpNoContent();
-
     do {
       repeat = server.readPOSTparam(name, 16, value, 16);
 
@@ -165,14 +172,55 @@ void speakers(WebServer &server, WebServer::ConnectionType type, char *, bool) {
         }
         else {
           server.httpFail();
-          break;
+          return;
         }
       }
       else {
         server.httpFail();
-        break;
+        return;
       }
     } while (repeat);
+    server.httpNoContent();
+  }
+  else {
+    server.httpFail();
+  }
+}
+
+/*
+ * POST /ir
+ * Sends an IR code
+ *
+ * Params:
+ *    length - an integer length in bits
+ *    code - the code itself as a long
+ */
+void ir(WebServer &server, WebServer::ConnectionType type, char *, bool) {
+  char name[16], value[16];
+  unsigned long code = 0;
+  int length = 32;
+  bool repeat;
+
+  if (type == WebServer::POST) {
+    do {
+      repeat = server.readPOSTparam(name, 16, value, 16);
+
+      if (strcmp(name, "length") == 0) {
+        length = atoi(value);
+      }
+      else if (strcmp(name, "code") == 0) {
+        code = strtoul(value, NULL, NULL);
+        Serial.println(value);
+      }
+    } while (repeat);
+
+    if (code == 0) {
+      server.httpFail();
+    }
+    else {
+      server.httpNoContent();
+      irSend.sendNEC(code, length);
+    }
   }
   else {
     server.httpFail();
@@ -202,6 +250,7 @@ void setup() {
   // Initialize web server
   webserver.setDefaultCommand(&index); // GET /
   webserver.addCommand("speakers", &speakers); // GET /speakers & POST /speakers
+  webserver.addCommand("ir", &ir); // POST /ir
   webserver.begin();
 
   Serial.print("> ");

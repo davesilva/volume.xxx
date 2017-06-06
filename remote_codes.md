@@ -1,0 +1,25 @@
+Projector
+------------------
+
+Power: 10C8E11E
+Menu: 10C821DE
+Up: 10C841BE
+Down: 10C8A15E
+Left: 10C8C13E
+Right: 10C8817E
+Source: 10C831CE
+HDMI: 10C836C9
+Contrast: 10C8B946
+Brightness: 10C87689
+
+HDMI Switcher
+------------------
+
+A1: FF00FF
+A2: FF807F
+A3: FF40BF
+A4: FFC03F
+B1: FF906F
+B2: FF50AF
+B3: FFD02F
+B4: FF30CF
